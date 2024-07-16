@@ -1,24 +1,70 @@
-import './style.css'
-import javascriptLogo from './javascript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.js'
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js"
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js"
 
-document.querySelector('#app').innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-      <img src="${javascriptLogo}" class="logo vanilla" alt="JavaScript logo" />
-    </a>
-    <h1>Hello Vite!</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite logo to learn more
-    </p>
-  </div>
+import "./style.css"
+
+const firebaseConfig = {
+  databaseURL: import.meta.env.VITE_DATABASE_URL,
+}
+
+const app = initializeApp(firebaseConfig)
+const database = getDatabase(app)
+
+console.log(database)
+
+document.querySelector("#app").innerHTML = `
+  <input type="text" id="input-el">
+  <button id="input-btn">SAVE INPUT</button>
+  <button id="tab-btn">SAVE TAB</button>
+  <button id="delete-btn">DELETE ALL</button>
+  <ul id="ul-el">
+  </ul>
 `
 
-setupCounter(document.querySelector('#counter'))
+let myLeads = []
+const inputEl = document.getElementById("input-el")
+const inputBtn = document.getElementById("input-btn")
+const ulEl = document.getElementById("ul-el")
+const deleteBtn = document.getElementById("delete-btn")
+const leadsFromLocalStorage = JSON.parse(localStorage.getItem("myLeads"))
+const tabBtn = document.getElementById("tab-btn")
+
+if (leadsFromLocalStorage) {
+  myLeads = leadsFromLocalStorage
+  render(myLeads)
+}
+
+tabBtn.addEventListener("click", function () {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    myLeads.push(tabs[0].url)
+    localStorage.setItem("myLeads", JSON.stringify(myLeads))
+    render(myLeads)
+  })
+})
+
+function render(leads) {
+  let listItems = ""
+  for (let i = 0; i < leads.length; i++) {
+    listItems += `
+            <li>
+                <a target='_blank' href='${leads[i]}'>
+                    ${leads[i]}
+                </a>
+            </li>
+        `
+  }
+  ulEl.innerHTML = listItems
+}
+
+deleteBtn.addEventListener("dblclick", function () {
+  localStorage.clear()
+  myLeads = []
+  render(myLeads)
+})
+
+inputBtn.addEventListener("click", function () {
+  myLeads.push(inputEl.value)
+  inputEl.value = ""
+  localStorage.setItem("myLeads", JSON.stringify(myLeads))
+  render(myLeads)
+})
