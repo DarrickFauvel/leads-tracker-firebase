@@ -4,6 +4,7 @@ import {
   ref,
   push,
   onValue,
+  remove,
 } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js"
 
 import "./style.css"
@@ -17,7 +18,8 @@ const database = getDatabase(app)
 const referenceInDB = ref(database, "leads")
 
 document.querySelector("#app").innerHTML = `
-  <input type="text" id="input-el">
+  <label>Enter URL:</label>
+  <input type="text" id="input-el" placeholder="https://scrimba.com">
   <button id="input-btn">SAVE INPUT</button>
   <button id="delete-btn">DELETE ALL</button>
   <ul id="ul-el">
@@ -44,12 +46,18 @@ function render(leads) {
 }
 
 onValue(referenceInDB, (snapshot) => {
-  const snapshotValues = snapshot.val()
-  const leads = Object.values(snapshotValues)
-  console.log(leads)
+  const snapshotDoesExist = snapshot.exists()
+  if (snapshotDoesExist) {
+    const snapshotValues = snapshot.val()
+    const leads = Object.values(snapshotValues)
+    render(leads)
+  }
 })
 
-deleteBtn.addEventListener("dblclick", function () {})
+deleteBtn.addEventListener("dblclick", function () {
+  remove(referenceInDB)
+  ulEl.innerHTML = ""
+})
 
 inputBtn.addEventListener("click", function () {
   push(referenceInDB, inputEl.value)
